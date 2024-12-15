@@ -1,0 +1,32 @@
+@font-face {
+    font-family: pixelada;
+    src: url("../font/Code.ttf") format("TrueType"); 
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#teste {
+    margin: 0 auto;
+    width: 800px;
+    height: 450px;
+}
+
+canvas {
+    border: 1px solid black;
+}
+
+.copyright {
+    text-align: center;
+}
+
+span {
+    font-weight: bold;
+}
+
+a:link, a:visited {
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}
