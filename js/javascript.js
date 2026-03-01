@@ -7,6 +7,22 @@ var delta;
 var cnv = document.querySelector("canvas");
 var ctx = cnv.getContext("2d");
 
+var windowWidth = window.innerWidth;
+var windowHeight = window.innerHeight;
+
+// Mantém proporção 16:9
+var aspectRatio = 16 / 9;
+
+if (windowWidth / windowHeight > aspectRatio) {
+    // Janela mais larga que 16:9 -> ajusta pela altura
+    cnv.height = windowHeight;
+    cnv.width = windowHeight * aspectRatio;
+} else {
+    // Janela mais alta que 16:9 -> ajusta pela largura
+    cnv.width = windowWidth;
+    cnv.height = windowWidth / aspectRatio;
+}
+
 var UP = false, DOWN = false, SHOOT = false, RIGHT = false, LEFT = false;
 var LOADING = 0, PAUSED = 1, PLAYING = 2, GAMEOVER = 3;
 var FIREsound = 0, EXPLODEsound = 1;
@@ -35,14 +51,14 @@ ImgFundo.addEventListener("load",carregando());
 ImgFundo.src = "assets/sky_background/example/sky_background_green_hills.png";
 assetsToLoad.push(ImgFundo);
 
-var fundo = new Sprites(0, 0, 800, 450, 0, 0);
+var fundo = new Sprites(0, 0, cnv.width, cnv.height, 0, 0);
 
 var ImgJogador = new Image();
 ImgJogador.addEventListener("load",carregando());
 ImgJogador.src = "assets/planes/plane_2/plane_2_green.png";
 assetsToLoad.push(ImgJogador);
 
-var jogador = new Sprites(0,0,101.3,55.7,1,197.15);
+var jogador = new Sprites(0,0,cnv.width*0.1,cnv.height*0.1,0,cnv.height/2 - (cnv.height*0.1)/2);
 
 var ImgEnemy = new Image();
 ImgEnemy.addEventListener("load",carregando());
@@ -64,7 +80,7 @@ ImgBoss.addEventListener("load", carregando());
 ImgBoss.src = "assets/planes/plane_3/plane_3_blue(-1).png";
 assetsToLoad.push(ImgBoss);
 
-var boss = new Sprites(0,0, 231.25, 113.75, cnv.width + 200, 225 - 57);
+var boss = new Sprites(0,0, cnv.width*0.3, cnv.height*0.25, cnv.width + cnv.width*0.25, cnv.height/2 - (cnv.height*0.25)/2);
 boss.bossLife = 100;
 
 var ImgBossShoot = new Image();
@@ -202,15 +218,15 @@ window.addEventListener('keydown', function(event){
             jogador.timeExploded = 0;
             jogador.animex = 0;
             jogador.animey = 0;
-            jogador.x = 1;
-            jogador.y= 197.15;
+            jogador.x = 0;
+            jogador.y= cnv.height/2 - (cnv.height*0.1)/2;
             boss.youwin = false;
             boss.bossLife = 100;
             boss.timeExploded = 0;
             boss.animex = 0;
             boss.animey = 0;
-            boss.x = cnv.width + 200;
-            boss.y = 225 - 57;
+            boss.x = cnv.width + cnv.width*0.25;
+            boss.y = cnv.height/2 - (cnv.height*0.25)/2;
 
             MensagemStart.visible = false;
             MensagemPaused.visible = false;
@@ -269,11 +285,11 @@ function eixoX() {
     });
 
     if (RIGHT) {
-        jogador.vx = 5;
+        jogador.vx = cnv.width*0.005;
     }
 
     if (LEFT) {
-        jogador.vx = -5;
+        jogador.vx = -cnv.width*0.005;
     }
 
     if (!LEFT && !RIGHT) {
@@ -286,8 +302,8 @@ function eixoX() {
 function freefire() {
     if(fogolivre > 10) {
         fogolivre = 0;
-        var tiro = new Sprites( 0, 0, 16, 7.1, jogador.x + 99.3, jogador.CenterY()+5 );
-        tiro.vx = 8;
+        var tiro = new Sprites(0, 0, cnv.width*0.02, cnv.height*0.015, jogador.x + jogador.width, jogador.CenterY()+cnv.height*0.01);
+        tiro.vx = cnv.width*0.05;
         tiros.push(tiro);
         playSound(FIREsound);
     }
@@ -295,8 +311,8 @@ function freefire() {
 
 function spawnEnemy() {
     if (timeSpawnEnemy > limiteTimeSpawnEnemy){
-        var inimigo = new Sprites(0,0,81.7,48.3, 800, Math.floor( Math.random() * 401.7 ) );
-        inimigo.vx = -3 - speedEnemy;
+        var inimigo = new Sprites(0, 0, cnv.width*0.1, cnv.height*0.1, cnv.width, Math.floor( Math.random() * (cnv.height - cnv.height*0.1) ) );
+        inimigo.vx = -cnv.width*0.005 - (cnv.width*speedEnemy);
         inimigos.push(inimigo);
         timeSpawnEnemy = 0;
     }
@@ -304,8 +320,8 @@ function spawnEnemy() {
 
 function likeboss() {
     var bossMovY = false;
-    if (boss.x > cnv.width - 231.25) {
-        boss.vx = -1.5;
+    if (boss.x > cnv.width - cnv.width*0.3) {
+        boss.vx = -cnv.width*0.002;
         boss.vy = 0;
     }
     else {
@@ -313,41 +329,41 @@ function likeboss() {
         bossMovY = true;
     }
 
-    if (bossMovY === true && (boss.y >= cnv.height - 113.75 || boss.vy === 0)) {
-        boss.vy = -4;
+    if (bossMovY === true && (boss.y >= cnv.height - boss.height || boss.vy === 0)) {
+        boss.vy = -cnv.width*0.005;
     }
     else if (boss.y <= 0) {
-        boss.vy = 4;
+        boss.vy = cnv.width*0.005;
     }
 
     boss.x += boss.vx;
-    boss.y = Math.min(cnv.height - 113.75, Math.max(0,boss.y + boss.vy));
+    boss.y = Math.min(cnv.height - boss.height, Math.max(0,boss.y + boss.vy));
 
     if (bossShootTime > 30 && boss.vx === 0) {
         bossShootTime = 0;
 
-        var bossFire = new Sprites(0,0,52,28.25,boss.x, boss.y + 60);
+        var bossFire = new Sprites(0,0,cnv.width*0.0625,cnv.height*0.0625,boss.x, boss.y + boss.height/2);
         var porcetagem = Math.floor(Math.random()*10);
         
         if (porcetagem <= 1) {
-            bossFire.vy = -2.5;
-            bossFire.vx = -7;
+            bossFire.vy = -cnv.width*0.0025;
+            bossFire.vx = -cnv.width*0.007;
         }
         else if (porcetagem <= 3 && porcetagem > 1) {
-            bossFire.vy = 2.5;
-            bossFire.vx = -7;
+            bossFire.vy = cnv.width*0.0025;
+            bossFire.vx = -cnv.width*0.007;
         }
         else if (porcetagem <= 5 && porcetagem > 3) {
-            bossFire.vy = -3.5;
-            bossFire.vx = -8;
+            bossFire.vy = -cnv.width*0.0035;
+            bossFire.vx = -cnv.width*0.008;
         }
         else if (porcetagem <= 7 && porcetagem > 5) {
-            bossFire.vy = 3.5;
-            bossFire.vx = -8;
+            bossFire.vy = cnv.width*0.0035;
+            bossFire.vx = -cnv.width*0.008;
         }
         else if (porcetagem <= 9 && porcetagem > 7) {
             bossFire.vy = 0;
-            bossFire.vx = -10;
+            bossFire.vx = -cnv.width*0.01;
         }
 
         bossShoot.push(bossFire);
@@ -355,13 +371,13 @@ function likeboss() {
     for (let i = 0; i < bossShoot.length; i++) {
         bossShoot[i].x += bossShoot[i].vx;
         bossShoot[i].y += bossShoot[i].vy;
-        if (bossShoot[i].y > cnv.height - 28.25) {
-            if(bossShoot[i].vy === 2.5){bossShoot[i].vy = -2.5;};
-            if(bossShoot[i].vy === 3.5){bossShoot[i].vy = -3.5;};
+        if (bossShoot[i].y > cnv.height - bossShoot[i].height) {
+            if(bossShoot[i].vy === cnv.width*0.0025){bossShoot[i].vy = -cnv.width*0.0025;};
+            if(bossShoot[i].vy === cnv.width*0.0035){bossShoot[i].vy = -cnv.width*0.0035;};
         }
         else if (bossShoot[i].y <= 0) {
-            if(bossShoot[i].vy === -2.5){bossShoot[i].vy = 2.5;};
-            if(bossShoot[i].vy === -3.5){bossShoot[i].vy = 3.5;};
+            if(bossShoot[i].vy === -cnv.width*0.0025){bossShoot[i].vy = cnv.width*0.0025;};
+            if(bossShoot[i].vy === -cnv.width*0.0035){bossShoot[i].vy = cnv.width*0.0035;};
         }
 
         if (bossShoot[i].x < -52) {
@@ -382,11 +398,11 @@ function likeboss() {
                     
                         var loopExploded = setInterval(() => {
                             explodedAnimation(inimigosExplodidos);
-                        }, 16); 
+                        }, 15); 
                         
                         setTimeout(() => {
                             clearInterval(loopExploded);
-                        }, 1000);
+                        }, 2000);
 
                         MensagemGameOver.visible = true;  
                         gameState = GAMEOVER;  
@@ -427,11 +443,11 @@ function explodedAnimation(animationElement) {
 
 function update() {
     if(UP === true) {
-        jogador.vy = -5;
+        jogador.vy = -cnv.height*0.01;
     }
 
     if(DOWN === true) {
-        jogador.vy = 5;
+        jogador.vy = cnv.height*0.01;
     }
 
     if (!UP && !DOWN) {
@@ -454,7 +470,7 @@ function update() {
 
     for (let i = 0; i < tiros.length; i++) {
         tiros[i].x += tiros[i].vx;
-        if (tiros[i].x > 800) {
+        if (tiros[i].x > cnv.width) {
             tiros.splice(i,1);
             i--;
         }
@@ -489,11 +505,11 @@ function update() {
                             
                             var loopExploded = setInterval(() => {
                                 explodedAnimation(inimigosExplodidos);
-                            }, 16); 
+                            }, 15); 
                             
                             setTimeout(() => {
                                 clearInterval(loopExploded);
-                            }, 1000);
+                            }, 2000);
             
                             MensagemWIN.visible = true;
                             gameState = GAMEOVER;  
@@ -508,7 +524,7 @@ function update() {
 
     for (let i = 0; i < inimigos.length; i++) {
         inimigos[i].x = inimigos[i].x + inimigos[i].vx;
-        if (inimigos[i].x < -82) {
+        if (inimigos[i].x < -cnv.width*0.1) {
             inimigos.splice(i,1);
             i--;
             vidaPlayer--;
@@ -533,11 +549,11 @@ function update() {
                     
                     var loopExploded = setInterval(() => {
                         explodedAnimation(inimigosExplodidos);
-                    }, 16); 
+                    }, 15); 
                     
                     setTimeout(() => {
                         clearInterval(loopExploded);
-                    }, 800);
+                    }, 2000);
 
                     MensagemGameOver.visible = true;  
                     gameState = GAMEOVER;  
@@ -553,11 +569,94 @@ function update() {
     timeSpawnEnemy++;
     bossShootTime++;
     limiteTimeSpawnEnemy -= 0.01;
-    speedEnemy+= 0.0015;
+    speedEnemy+= 0.0000005;
+}
+
+function getAspectRatio() {
+    windowWidth = window.innerWidth;
+    windowHeight = window.innerHeight;
+
+    oldCanvasWidth = cnv.width;
+    oldCanvasHeight = cnv.height;
+
+    if (windowWidth / windowHeight > aspectRatio) {
+        // Janela mais larga que 16:9 -> ajusta pela altura
+        cnv.height = windowHeight;
+        cnv.width = windowHeight * aspectRatio;
+    } else {
+        // Janela mais alta que 16:9 -> ajusta pela largura
+        cnv.width = windowWidth;
+        cnv.height = windowWidth / aspectRatio;
+    }
+
+    var scaleX = cnv.width / oldCanvasWidth;
+    var scaleY = cnv.height / oldCanvasHeight;
+
+    fundo.width = cnv.width;
+    fundo.height = cnv.height;
+
+    jogador.width = cnv.width*0.1;
+    jogador.height = cnv.height*0.1;
+    jogador.x = jogador.x * scaleX;
+    jogador.y = jogador.y * scaleY;
+    jogador.vx = cnv.width*0.005;
+    jogador.vy = cnv.height*0.005;
+
+    inimigos.forEach(element => {
+        element.width = cnv.width*0.1;
+        element.height = cnv.height*0.1;
+        element.x = element.x * scaleX;
+        element.y = element.y * scaleY;
+        element.vx = element.vx * scaleX;
+        element.vy = element.vy * scaleY;
+    });
+
+    tiros.forEach(element => {
+        element.width = cnv.width*0.02;
+        element.height = cnv.height*0.015;
+        element.x = element.x * scaleX;
+        element.y = element.y * scaleY;
+        element.vx = element.vx * scaleX;
+        element.vy = element.vy * scaleY;
+    });
+
+    inimigosExplodidos.forEach(element => {
+        element.x = element.x * scaleX;
+        element.y = element.y * scaleY;
+    });
+
+    bossShoot.forEach(element => {
+        element.width = cnv.width*0.0625;
+        element.height = cnv.height*0.0625;
+        element.x = element.x * scaleX;
+        element.y = element.y * scaleY;
+        element.vx = element.vx * scaleX;
+        element.vy = element.vy * scaleY;
+    });
+
+    bosshits.forEach(element => {
+        element.width = cnv.width*0.0375;
+        element.height = cnv.height*0.05;
+        element.x = element.x * scaleX;
+        element.y = element.y * scaleY;
+    });
+
+    boss.width = cnv.width*0.3;
+    boss.height = cnv.height*0.25;
+    boss.x = boss.x * scaleX;
+    boss.y = boss.y * scaleY;
+    boss.vx = boss.vx * scaleX;
+    boss.vy = boss.vy * scaleY;
+
+    var fontSize = "bold " + cnv.width*0.035 + "px pixelada,Arial, Helvetica, sans-serif";;
+    mensagens.forEach(element => {
+        element.font = fontSize;
+    });
 }
 
 function render() {
     piscando++;
+    getAspectRatio();
     ctx.clearRect(0,0,cnv.width, cnv.height);
     ctx.drawImage(ImgFundo, fundo.sourceX, fundo.sourceY, 2826, 1536, fundo.x, fundo.y, fundo.width, fundo.height);
     if(jogador.exploded === false) {
@@ -579,10 +678,10 @@ function render() {
     for (let i = 0; i < inimigosExplodidos.length; i++) {
         var enemyDestroy = inimigosExplodidos[i];
         if (enemyDestroy.exploded === true) {
-            ctx.drawImage(ImgExploded, 595.33 * enemyDestroy.animex, 512 * enemyDestroy.animey, 595.33, 512, enemyDestroy.x, enemyDestroy.y, 59.5, 51.2);
+            ctx.drawImage(ImgExploded, 595.33 * enemyDestroy.animex, 512 * enemyDestroy.animey, 595.33, 512, enemyDestroy.x, enemyDestroy.y, cnv.width*0.075, cnv.height*0.1);
         }
         else if (enemyDestroy.youwin === true) {
-            ctx.drawImage(ImgExploded, 595.33 * enemyDestroy.animex, 512 * enemyDestroy.animey, 595.33, 512, enemyDestroy.x, enemyDestroy.y, 178.5, 153.2);
+            ctx.drawImage(ImgExploded, 595.33 * enemyDestroy.animex, 512 * enemyDestroy.animey, 595.33, 512, enemyDestroy.x, enemyDestroy.y, cnv.width*0.2, cnv.height*0.3);
         }
     }
 
@@ -598,16 +697,16 @@ function render() {
     for (let i = 0; i < bosshits.length; i++) {
         var hits = bosshits[i];
 
-        ctx.drawImage(ImgExploded, 595.33 * hits.animex, 512 * hits.animey, 595.33, 512, hits.x, hits.y, 29.75, 25.6);
+        ctx.drawImage(ImgExploded, 595.33 * hits.animex, 512 * hits.animey, 595.33, 512, hits.x, hits.y, hits.width, hits.height);
     }
 
-    ctx.font = "bold 22px pixelada,Arial, Helvetica, sans-serif";
+    ctx.font = "bold " + cnv.width*0.023 + "px pixelada,Arial, Helvetica, sans-serif";
     ctx.fillStyle = "black";
     ctx.textAlign = "right";
-    ctx.fillText("Naves abatidas: " + inimigosAbatidos, cnv.width-15, 25);
+    ctx.fillText("Naves abatidas: " + inimigosAbatidos, cnv.width - cnv.width*0.01, cnv.height*0.04);
     
     for (let i = 0; i < vidaPlayer; i++) {
-        ctx.drawImage(ImgVida, 0, 0, 567, 567, 5+i*24, 5, 24, 24);
+        ctx.drawImage(ImgVida, 0, 0, 567, 567, cnv.width*0.005+i*cnv.width*0.02, cnv.width*0.005, cnv.width*0.02, cnv.width*0.02);
     }
 
     for (let i = 0; i < mensagens.length; i++) {

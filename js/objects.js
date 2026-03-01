@@ -33,7 +33,7 @@ Sprites.prototype.AnimeX =  function() {
     return this.animex;
 }
 
-var MensagemLabel = function(texto,) {
+var MensagemLabel = function(texto) {
     this.visible = false;
     this.content = texto;
     this.font = "bold 36px pixelada,Arial, Helvetica, sans-serif";
